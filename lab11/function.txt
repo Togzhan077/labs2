@@ -71,6 +71,26 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE PROCEDURE insert_multiple_users(user_list record[])
+LANGUAGE plpgsql AS $$
+DECLARE
+    user_record record;
+BEGIN
+    -- Iterate over each element in the array (user_list)
+    FOREACH user_record IN ARRAY user_list
+    LOOP
+        -- Check if the user already exists, then update or insert accordingly
+        IF EXISTS (SELECT 1 FROM phonebook WHERE name = user_record.name) THEN
+            UPDATE phonebook
+            SET phone = user_record.phone
+            WHERE name = user_record.name;
+        ELSE
+            INSERT INTO phonebook (name, phone)
+            VALUES (user_record.name, user_record.phone);
+        END IF;
+    END LOOP;
+END;
+$$;
 
 CALL insert_many_users('[
     {"name": "Lusy", "phone": "44455545454"}
